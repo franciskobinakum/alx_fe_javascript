@@ -37,6 +37,17 @@
       <button id="showAddForm" class="secondary">Add a Quote</button>
       <button id="resetStorage" class="secondary">Reset (clear added)</button>
     </div>
+    
+    <!-- Export / Import toolbar (paste into your controls area) -->
+<div class="toolbar">
+  <button id="exportJson">Export JSON</button>
+  <label style="display:inline-flex;align-items:center;gap:8px;">
+    <input id="importFile" type="file" accept=".json" />
+    <span class="small">Import JSON</span>
+  </label>
+  <button id="clearSession" class="secondary">Clear Session</button>
+</div>
+
 
     <!-- Quote display -->
     <div id="quoteDisplay" aria-live="polite">
