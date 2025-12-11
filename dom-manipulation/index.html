@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Dynamic Quote Generator</title>
+  <title>Dynamic Quote Generator — Storage & JSON</title>
   <style>
     body{font-family:Inter,system-ui,Arial;max-width:900px;margin:28px auto;padding:16px;color:#111;}
     header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
@@ -12,17 +12,18 @@
     .quote-meta{color:#555;font-size:0.9rem}
     .controls{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
     label{font-weight:600;margin-right:6px}
-    select,input[type="text"]{padding:8px;border-radius:6px;border:1px solid #ddd}
+    select,input[type="text"], input[type="file"]{padding:8px;border-radius:6px;border:1px solid #ddd}
     button{padding:8px 12px;border-radius:6px;border:0;background:#0b74de;color:#fff;cursor:pointer}
     button.secondary{background:#6b7280}
     form.add-quote{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     .small{font-size:0.9rem;color:#666}
+    .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; }
   </style>
 </head>
 <body>
   <header>
     <h1>Dynamic Quote Generator</h1>
-    <div class="small">Use categories, add quotes, and persist them locally</div>
+    <div class="small">Local & session storage, import/export JSON</div>
   </header>
 
   <section id="app">
@@ -37,17 +38,16 @@
       <button id="showAddForm" class="secondary">Add a Quote</button>
       <button id="resetStorage" class="secondary">Reset (clear added)</button>
     </div>
-    
-    <!-- Export / Import toolbar (paste into your controls area) -->
-<div class="toolbar">
-  <button id="exportJson">Export JSON</button>
-  <label style="display:inline-flex;align-items:center;gap:8px;">
-    <input id="importFile" type="file" accept=".json" />
-    <span class="small">Import JSON</span>
-  </label>
-  <button id="clearSession" class="secondary">Clear Session</button>
-</div>
 
+    <!-- additional toolbar for import/export -->
+    <div class="toolbar">
+      <button id="exportJson">Export Quotes</button>
+      <label for="importFile" style="display:inline-flex;align-items:center;gap:8px;">
+        <input id="importFile" type="file" accept=".json" />
+        <span class="small">Import JSON</span>
+      </label>
+      <button id="clearSession" class="secondary" title="Clear last viewed quote (session)">Clear Session</button>
+    </div>
 
     <!-- Quote display -->
     <div id="quoteDisplay" aria-live="polite">
