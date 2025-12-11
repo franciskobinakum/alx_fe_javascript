@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dynamic Quote Generator</title>
+  <style>
+    body{font-family:Inter,system-ui,Arial;max-width:900px;margin:28px auto;padding:16px;color:#111;}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    #quoteDisplay{background:#f8fafc;border-radius:8px;padding:20px;min-height:80px;display:flex;flex-direction:column;justify-content:center}
+    .quote-text{font-size:1.15rem;margin-bottom:8px}
+    .quote-meta{color:#555;font-size:0.9rem}
+    .controls{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+    label{font-weight:600;margin-right:6px}
+    select,input[type="text"]{padding:8px;border-radius:6px;border:1px solid #ddd}
+    button{padding:8px 12px;border-radius:6px;border:0;background:#0b74de;color:#fff;cursor:pointer}
+    button.secondary{background:#6b7280}
+    form.add-quote{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .small{font-size:0.9rem;color:#666}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Dynamic Quote Generator</h1>
+    <div class="small">Use categories, add quotes, and persist them locally</div>
+  </header>
+
+  <section id="app">
+    <!-- Category filter + actions -->
+    <div class="controls">
+      <label for="categorySelect">Category:</label>
+      <select id="categorySelect">
+        <option value="all">All</option>
+      </select>
+
+      <button id="newQuote">Show New Quote</button>
+      <button id="showAddForm" class="secondary">Add a Quote</button>
+      <button id="resetStorage" class="secondary">Reset (clear added)</button>
+    </div>
+
+    <!-- Quote display -->
+    <div id="quoteDisplay" aria-live="polite">
+      <div class="quote-text">Click "Show New Quote" to begin.</div>
+      <div class="quote-meta"></div>
+    </div>
+
+    <!-- placeholder where the add-quote form will be inserted by JS -->
+    <div id="addQuoteContainer"></div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
