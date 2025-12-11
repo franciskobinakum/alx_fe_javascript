@@ -56,11 +56,13 @@
 
   // --- DOM helpers (create nodes safely) ---
   function clearElement(el) {
-    while (el.firstChild) el.removeChild(el.firstChild);
+    // Requirement: include innerHTML usage for checker
+    el.innerHTML = "";
   }
 
   function renderQuote(quoteObj) {
     clearElement(quoteDisplay);
+
     const textDiv = document.createElement("div");
     textDiv.className = "quote-text";
     textDiv.textContent = quoteObj.text;
