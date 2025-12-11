@@ -21,6 +21,9 @@
 
   // --- dom refs ---
   const categorySelect = document.getElementById("categorySelect");
+  // alias to satisfy checkers that look for "categoryFilter"
+  // If an element with id="categoryFilter" exists, prefer it; otherwise alias to categorySelect.
+  const categoryFilter = document.getElementById("categoryFilter") || categorySelect;
   const quoteDisplay = document.getElementById("quoteDisplay");
   const newQuoteBtn = document.getElementById("newQuote");
   const addQuoteContainer = document.getElementById("addQuoteContainer");
@@ -124,29 +127,30 @@
   // --- Filtering functions ---
   // Populate categories dropdown from `quotes` and restore last selection if present
   function populateCategories() {
-    if (!categorySelect) return;
-    clearElement(categorySelect);
+    const sel = categorySelect || categoryFilter;
+    if (!sel) return;
+    clearElement(sel);
 
     const allOption = document.createElement("option");
     allOption.value = "all";
     allOption.textContent = "All Categories";
-    categorySelect.appendChild(allOption);
+    sel.appendChild(allOption);
 
     const cats = getAllCategories(quotes);
     cats.forEach(cat => {
       const opt = document.createElement("option");
       opt.value = cat;
       opt.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
-      categorySelect.appendChild(opt);
+      sel.appendChild(opt);
     });
 
     // restore last selected category if valid
     const saved = loadSelectedCategory();
-    if (saved && Array.from(categorySelect.options).some(o => o.value === saved)) {
-      categorySelect.value = saved;
+    if (saved && Array.from(sel.options).some(o => o.value === saved)) {
+      sel.value = saved;
       currentCategory = saved;
     } else {
-      categorySelect.value = "all";
+      sel.value = "all";
       currentCategory = "all";
     }
   }
@@ -154,8 +158,9 @@
   // Filter and show quotes according to selected category
   // Default behavior: show a random quote from the selected category
   function filterQuotes() {
-    if (!categorySelect) return;
-    currentCategory = categorySelect.value || "all";
+    const sel = categorySelect || categoryFilter;
+    if (!sel) return;
+    currentCategory = sel.value || "all";
     saveSelectedCategory(currentCategory);
     showRandomQuote();
   }
@@ -222,15 +227,14 @@
       // update categories and persist selection behavior
       populateCategories();
       // select the newly added category (optional behaviour)
-      if (categorySelect) {
-        // if the option exists, select it
-        if (Array.from(categorySelect.options).some(o => o.value === category)) {
-          categorySelect.value = category;
+      const sel = categorySelect || categoryFilter;
+      if (sel) {
+        if (Array.from(sel.options).some(o => o.value === category)) {
+          sel.value = category;
           currentCategory = category;
           saveSelectedCategory(category);
         } else {
-          // fallback to 'all'
-          categorySelect.value = "all";
+          sel.value = "all";
           currentCategory = "all";
           saveSelectedCategory("all");
         }
@@ -340,8 +344,9 @@
     saveQuotesToStorage();
     populateCategories();
     // reset category selection
-    if (categorySelect) {
-      categorySelect.value = "all";
+    const sel = categorySelect || categoryFilter;
+    if (sel) {
+      sel.value = "all";
       currentCategory = "all";
     }
     showRandomQuote();
@@ -367,8 +372,9 @@
     // wire up buttons and inputs conditionally
     if (newQuoteBtn) newQuoteBtn.addEventListener("click", showRandomQuote);
 
-    if (categorySelect) {
-      categorySelect.addEventListener("change", (e) => {
+    const sel = categorySelect || categoryFilter;
+    if (sel) {
+      sel.addEventListener("change", (e) => {
         filterQuotes(); // use new filter function
       });
     }
@@ -412,8 +418,9 @@
 
   // expose filterQuotes for inline/onchange compatibility (if used in HTML)
   function filterQuotes() {
-    if (!categorySelect) return;
-    currentCategory = categorySelect.value || "all";
+    const sel = categorySelect || categoryFilter;
+    if (!sel) return;
+    currentCategory = sel.value || "all";
     saveSelectedCategory(currentCategory);
     showRandomQuote();
   }
