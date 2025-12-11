@@ -1,5 +1,5 @@
 // script.js
-// Dynamic Quote Generator with categories, local/session storage, JSON import/export
+// Dynamic Quote Generator with categories, local/session storage, JSON import/export, and category filtering
 (() => {
   // --- initial quotes (default dataset) ---
   const DEFAULT_QUOTES = [
@@ -13,6 +13,7 @@
   // --- storage keys ---
   const STORAGE_KEY = "dynamic_quotes_v1";
   const SESSION_LAST_QUOTE = "dynamic_quotes_last_viewed";
+  const STORAGE_KEY_SELECTED_CATEGORY = "dynamic_quotes_selected_category";
 
   // --- state ---
   let quotes = [];
@@ -69,6 +70,23 @@
     }
   }
 
+  // selected category save/load (persist across sessions)
+  function saveSelectedCategory(cat) {
+    try {
+      localStorage.setItem(STORAGE_KEY_SELECTED_CATEGORY, cat);
+    } catch (e) {
+      console.warn("Could not save selected category", e);
+    }
+  }
+
+  function loadSelectedCategory() {
+    try {
+      return localStorage.getItem(STORAGE_KEY_SELECTED_CATEGORY) || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function getAllCategories(arr) {
     const s = new Set(arr.map(q => (q.category || "uncategorized").toLowerCase()));
     return Array.from(s).sort();
@@ -101,6 +119,45 @@
   function pickRandom(arr) {
     if (!arr.length) return null;
     return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  // --- Filtering functions ---
+  // Populate categories dropdown from `quotes` and restore last selection if present
+  function populateCategories() {
+    if (!categorySelect) return;
+    clearElement(categorySelect);
+
+    const allOption = document.createElement("option");
+    allOption.value = "all";
+    allOption.textContent = "All Categories";
+    categorySelect.appendChild(allOption);
+
+    const cats = getAllCategories(quotes);
+    cats.forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat;
+      opt.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+      categorySelect.appendChild(opt);
+    });
+
+    // restore last selected category if valid
+    const saved = loadSelectedCategory();
+    if (saved && Array.from(categorySelect.options).some(o => o.value === saved)) {
+      categorySelect.value = saved;
+      currentCategory = saved;
+    } else {
+      categorySelect.value = "all";
+      currentCategory = "all";
+    }
+  }
+
+  // Filter and show quotes according to selected category
+  // Default behavior: show a random quote from the selected category
+  function filterQuotes() {
+    if (!categorySelect) return;
+    currentCategory = categorySelect.value || "all";
+    saveSelectedCategory(currentCategory);
+    showRandomQuote();
   }
 
   // --- core functions ---
@@ -161,10 +218,25 @@
       const newQ = { text, category };
       quotes.push(newQ);
       saveQuotesToStorage();
-      rebuildCategoryOptions();
+
+      // update categories and persist selection behavior
+      populateCategories();
+      // select the newly added category (optional behaviour)
+      if (categorySelect) {
+        // if the option exists, select it
+        if (Array.from(categorySelect.options).some(o => o.value === category)) {
+          categorySelect.value = category;
+          currentCategory = category;
+          saveSelectedCategory(category);
+        } else {
+          // fallback to 'all'
+          categorySelect.value = "all";
+          currentCategory = "all";
+          saveSelectedCategory("all");
+        }
+      }
+
       // show the added quote immediately
-      currentCategory = "all"; // show across categories
-      if (categorySelect) categorySelect.value = "all";
       renderQuote(newQ);
       form.reset();
       // optionally remove the form
@@ -186,21 +258,10 @@
     textInput.focus();
   }
 
+  // legacy compatibility: if some parts call rebuildCategoryOptions, keep a wrapper
   function rebuildCategoryOptions() {
-    if (!categorySelect) return;
-    clearElement(categorySelect);
-    const allOption = document.createElement("option");
-    allOption.value = "all";
-    allOption.textContent = "All";
-    categorySelect.appendChild(allOption);
-
-    const cats = getAllCategories(quotes);
-    cats.forEach(cat => {
-      const opt = document.createElement("option");
-      opt.value = cat;
-      opt.textContent = cat[0].toUpperCase() + cat.slice(1);
-      categorySelect.appendChild(opt);
-    });
+    // alias to populateCategories for compatibility
+    populateCategories();
   }
 
   // --- JSON Export ---
@@ -243,10 +304,20 @@
         }
         // Normalize category and push
         const normalized = valid.map(q => ({ text: String(q.text), category: (q.category || "uncategorized").toString().toLowerCase() }));
-        quotes.push(...normalized);
+
+        // optional: avoid exact duplicate texts (simple dedupe)
+        const existingSet = new Set(quotes.map(q => q.text + '||' + (q.category || '')));
+        const toAdd = normalized.filter(n => {
+          const key = n.text + '||' + (n.category || '');
+          if (existingSet.has(key)) return false;
+          existingSet.add(key);
+          return true;
+        });
+
+        quotes.push(...toAdd);
         saveQuotesToStorage();
-        rebuildCategoryOptions();
-        alert(`Imported ${normalized.length} quotes successfully.`);
+        populateCategories();
+        alert(`Imported ${toAdd.length} new quotes successfully (skipped ${normalized.length - toAdd.length} duplicates).`);
       } catch (err) {
         console.error("Import error:", err);
         alert("Failed to import JSON: " + (err && err.message));
@@ -261,12 +332,18 @@
   function resetStorage() {
     try {
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_KEY_SELECTED_CATEGORY);
     } catch (e) {
       console.warn("Could not clear storage", e);
     }
     quotes = DEFAULT_QUOTES.slice();
     saveQuotesToStorage();
-    rebuildCategoryOptions();
+    populateCategories();
+    // reset category selection
+    if (categorySelect) {
+      categorySelect.value = "all";
+      currentCategory = "all";
+    }
     showRandomQuote();
   }
 
@@ -276,7 +353,8 @@
     const stored = loadQuotesFromStorage();
     quotes = Array.isArray(stored) && stored.length ? stored : DEFAULT_QUOTES.slice();
 
-    rebuildCategoryOptions();
+    // populate categories and restore last selected category
+    populateCategories();
 
     // Try to load last viewed from session and show it (if available)
     const last = loadLastViewedFromSession();
@@ -291,8 +369,7 @@
 
     if (categorySelect) {
       categorySelect.addEventListener("change", (e) => {
-        currentCategory = e.target.value;
-        showRandomQuote();
+        filterQuotes(); // use new filter function
       });
     }
 
@@ -332,4 +409,15 @@
 
   // run init on DOMContentLoaded
   document.addEventListener("DOMContentLoaded", init);
+
+  // expose filterQuotes for inline/onchange compatibility (if used in HTML)
+  function filterQuotes() {
+    if (!categorySelect) return;
+    currentCategory = categorySelect.value || "all";
+    saveSelectedCategory(currentCategory);
+    showRandomQuote();
+  }
+
+  // ensure availability if some HTML uses onchange="filterQuotes()"
+  window.filterQuotes = filterQuotes;
 })();
